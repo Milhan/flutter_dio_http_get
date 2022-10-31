@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dio_http_get/service/post_comments.dart';
 import 'package:flutter_dio_http_get/service/post_model.dart';
 
 class ServicesLearnGet extends StatefulWidget {
@@ -11,24 +12,38 @@ class ServicesLearnGet extends StatefulWidget {
 }
 
 class _ServicesLearnGetState extends State<ServicesLearnGet> {
-  List<PostModel>? _items;
+  List<PostComments>? _itemsComments;
+  List<PostModel>? _itemsModels;
   String name = 'APİ İle Veri Get';
   //late final Dio _dio;
 
   @override
   void initState() {
     super.initState();
-    fectPostItems();
+    fectPost();
   }
 
-  Future<void> fectPostItems() async {
+  Future<void> fectPostComments() async {
+    final response = await Dio()
+        .get('https://jsonplaceholder.typicode.com/posts/1/comments');
+    if (response.statusCode == HttpStatus.ok) {
+      final datas = response.data;
+      if (datas is List) {
+        setState(() {
+          _itemsComments = datas.map((e) => PostComments.fromJson(e)).toList();
+        });
+      }
+    }
+  }
+
+  Future<void> fectPost() async {
     final response =
         await Dio().get('https://jsonplaceholder.typicode.com/posts');
     if (response.statusCode == HttpStatus.ok) {
       final datas = response.data;
       if (datas is List) {
         setState(() {
-          _items = datas.map((e) => PostModel.fromJson(e)).toList();
+          _itemsModels = datas.map((e) => PostModel.fromJson(e)).toList();
         });
       }
     }
@@ -37,47 +52,30 @@ class _ServicesLearnGetState extends State<ServicesLearnGet> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(name),
-          centerTitle: true,
-        ),
-        body: Center(
-            child: _items == null
-                ? const CircularProgressIndicator.adaptive(
-                    backgroundColor: Colors.red,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    itemCount: _items?.length ?? 0,
-                    itemBuilder: (context, index) {
-                      return _PostCard(model: _items?[index]);
-                    })));
-  }
-}
-
-class _PostCard extends StatelessWidget {
-  const _PostCard({
-    Key? key,
-    required PostModel? model,
-  })  : _model = model,
-        super(key: key);
-
-  final PostModel? _model;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: ListTile(
-        onTap: () {},
-        title: Text(
-          _model?.title ?? 'Ali',
-          style: TextStyle(color: Colors.red),
-        ),
-        subtitle: Text(_model?.body ?? 'Ali Açıklama'),
-        leading: Text(_model?.id.toString() ?? '1'),
-        //dense: true,
+      appBar: AppBar(
+        title: Text(name),
+        centerTitle: true,
       ),
+      body: ListView.builder(
+          itemCount: _itemsModels?.length ?? 0,
+          itemBuilder: (context, index) {
+            return Card(
+              color: Colors.red,
+              child: Column(
+                children: [
+                  Text(
+                    _itemsModels?[index].title ?? '',
+                    style: Theme.of(context).textTheme.headline6,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    _itemsModels?[index].body ?? '',
+                    style: Theme.of(context).textTheme.headline6,
+                  )
+                ],
+              ),
+            );
+          }),
     );
   }
 }
